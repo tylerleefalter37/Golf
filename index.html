@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>PGA TOUR 2027 | Shot-by-Shot Master Pro</title>
+  <style>
+    :root {
+      --scorecard-bg: #f5f8f5;
+      --card-white: #ffffff;
+      --card-border: #cfe0cd;
+      --augusta-green: #0a3d24;
+      --augusta-dark: #052415;
+      --fairway-green: #145a36;
+      --fairway-tint: #eaf3eb;
+      --pga-gold: #c59b27;
+      --pga-gold-light: #fef3c7;
+      --ink: #1a261d;
+      --pencil-gray: #526356;
+      --birdie-red: #c92a2a;
+      --eagle-gold: #b45309;
+      --bogey-blue: #1d4ed8;
+      --double-black: #0f172a;
+      --font-serif: "Georgia", "Palatino", serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--scorecard-bg);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      padding-bottom: calc(75px + env(safe-area-inset-bottom));
+      line-height: 1.35;
+      font-size: 13px;
+      overflow-x: hidden;
+    }
+
+    /* Scorecard Header / HUD */
+    .pga-hud {
+      position: sticky;
+      top: 0;
+      background: linear-gradient(180deg, var(--augusta-dark) 0%, var(--augusta-green) 100%);
+      color: #fff;
+      border-bottom: 3px solid var(--pga-gold);
+      padding: 8px 12px;
+      z-index: 100;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+    }
+
+    .pga-hud-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-serif);
+    }
+
+    .crest {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--pga-gold);
+      letter-spacing: 0.5px;
+    }
+
+    .hud-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+      margin-top: 6px;
+      background: rgba(0, 0, 0, 0.28);
+      padding: 5px;
+      border-radius: 6px;
+      border: 1px solid rgba(197, 155, 39, 0.35);
+      text-align: center;
+    }
+
+    .hud-box span {
+      display: block;
+      font-size: 8px;
+      text-transform: uppercase;
+      color: #cbd5e1;
+      letter-spacing: 0.5px;
+    }
+
+    .hud-box strong {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .energy-bar-wrap {
+      height: 3px;
+      background: rgba(255,255,255,0.25);
+      margin-top: 5px;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .energy-bar-fill {
+      height: 100%;
+      background: var(--pga-gold);
+      width: 100%;
+      transition: width 0.3s;
+    }
+
+    /* Container */
+    .container {
+      padding: 12px;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    .tab-view { display: none; }
+    .tab-view.active { display: block; animation: tabIn 0.15s ease-out; }
+
+    @keyframes tabIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Scorecard Paper Sheets */
+    .sheet {
+      background: var(--card-white);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      position: relative;
+    }
+
+    .sheet::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--augusta-green);
+      border-radius: 8px 8px 0 0;
+    }
+
+    .sheet-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 2px solid var(--fairway-tint);
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+    }
+
+    .sheet-title {
+      font-family: var(--font-serif);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--augusta-green);
+    }
+
+    .badge {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+    }
+    .badge-major { background: #fee2e2; color: #991b1b; }
+    .badge-sig { background: #e0f2fe; color: #075985; }
+    .badge-playoff { background: #fef3c7; color: #92400e; }
+    .badge-reg { background: #f1f5f9; color: #475569; }
+
+    /* Buttons */
+    .btn {
+      display: block;
+      width: 100%;
+      background: var(--augusta-green);
+      color: #fff;
+      border: 1px solid var(--augusta-dark);
+      border-radius: 6px;
+      padding: 11px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 8px;
+      transition: background 0.15s, transform 0.05s;
+    }
+    .btn:active { transform: scale(0.98); background: var(--augusta-dark); }
+    .btn-gold { background: var(--pga-gold); border-color: #92400e; color: #fff; }
+    .btn-gold:active { background: #92400e; }
+    .btn-subtle { background: #fff; color: var(--augusta-green); border: 1px solid var(--card-border); }
+    .btn-subtle:active { background: var(--fairway-tint); }
+
+    /* Ledgers & Rows */
+    .ledger {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 0;
+      border-bottom: 1px dashed var(--card-border);
+      font-size: 12px;
+    }
+    .ledger:last-child { border-bottom: none; }
+    .ledger-lbl { color: var(--pencil-gray); }
+    .ledger-val { font-family: var(--font-mono); font-weight: 700; color: var(--ink); }
+
+    /* Scorecard Tables */
+    .score-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      margin-top: 6px;
+    }
+    .score-tbl th, .score-tbl td {
+      border: 1px solid var(--card-border);
+      padding: 4px 2px;
+      text-align: center;
+    }
+    .score-tbl th {
+      background: var(--fairway-tint);
+      color: var(--augusta-green);
+      font-weight: 700;
+    }
+    .circle-birdie {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      line-height: 16px;
+      border-radius: 50%;
+      background: var(--birdie-red);
+      color: #fff;
+      font-weight: bold;
+    }
+    .circle-eagle {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      line-height: 16px;
+      border-radius: 50%;
+      background: var(--eagle-gold);
+      color: #fff;
+      font-weight: bold;
+      border: 1px double #fff;
+    }
+    .square-bogey {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      line-height: 15px;
+      background: var(--bogey-blue);
+      color: #fff;
+      font-weight: bold;
+    }
+    .square-double {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      line-height: 15px;
+      background: var(--double-black);
+      color: #fff;
+      font-weight: bold;
+    }
+
+    /* Interactive Shot Center Box */
+    .shot-box {
+      background: #0f1c13;
+      color: #ecfdf5;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      border: 1px solid var(--pga-gold);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+    }
+
+    .shot-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      margin: 8px 0;
+      text-align: center;
+      background: rgba(255,255,255,0.06);
+      padding: 6px;
+      border-radius: 5px;
+      font-family: var(--font-mono);
+    }
+    .shot-stats-grid span { font-size: 8px; color: #94a3b8; display: block; }
+    .shot-stats-grid strong { font-size: 11px; color: #fff; }
+
+    .shot-log {
+      max-height: 130px;
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.5;
+      color: #a7f3d0;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Fixed Bottom Thumb Bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: calc(56px + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
+      background: #ffffff;
+      border-top: 2px solid var(--augusta-green);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+    }
+
+    .bar-btn {
+      flex: 1;
+      height: 100%;
+      background: none;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--pencil-gray);
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      gap: 2px;
+    }
+    .bar-btn.active { color: var(--augusta-green); font-weight: 800; }
+    .bar-btn .icon { font-size: 16px; }
+
+    /* Modal */
+    .modal-shade {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 36, 21, 0.75);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 16px;
+    }
+    .modal-shade.active { display: flex; }
+    .modal-sheet {
+      background: #ffffff;
+      border: 2px solid var(--augusta-green);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky PGA Header -->
+  <header class="pga-hud">
+    <div class="pga-hud-top">
+      <span class="crest">⛳ PGA TOUR <span style="color:#fff; font-weight:400;">2027</span></span>
+      <span id="hud-name" style="font-size:11px; font-weight:600; color:#cbd5e1;">PLAYER</span>
+    </div>
+    <div class="hud-grid">
+      <div class="hud-box"><span>OWGR</span><strong id="hud-owgr">#150</strong></div>
+      <div class="hud-box"><span>Tour Bank</span><strong id="hud-cash">$35,000</strong></div>
+      <div class="hud-box"><span>FedEx Pts</span><strong id="hud-fedex">0</strong></div>
+      <div class="hud-box"><span>PGA Wins</span><strong id="hud-wins">0</strong></div>
+    </div>
+    <div class="energy-bar-wrap" title="Energy">
+      <div class="energy-bar-fill" id="hud-energy"></div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container">
+
+    <!-- 1. SCHEDULE & TOURNAMENTS -->
+    <section id="tab-tour" class="tab-view active">
+      <div class="sheet">
+        <div class="sheet-title-row">
+          <div>
+            <div style="font-size:9px; text-transform:uppercase; color:var(--pga-gold); font-weight:800;" id="ev-week-label">Week 1 of 30</div>
+            <div class="sheet-title" id="ev-name">The Sentry</div>
+          </div>
+          <span class="badge badge-sig" id="ev-badge">SIGNATURE</span>
+        </div>
+
+        <div style="font-size:12px; color:var(--pencil-gray); margin-bottom:6px;" id="ev-course">Kapalua Plantation Course</div>
+        <div style="font-size:11px; margin-bottom:12px; line-height:1.4;" id="ev-desc">Elevated tee shots and trade winds.</div>
+
+        <div class="ledger">
+          <span class="ledger-lbl">Tournament Purse</span>
+          <span class="ledger-val" id="ev-purse" style="color:var(--augusta-green); font-size:13px;">$20,000,000</span>
+        </div>
+        <div class="ledger">
+          <span class="ledger-lbl">FedEx Points to Winner</span>
+          <span class="ledger-val" id="ev-pts">700 PTS</span>
+        </div>
+        <div class="ledger">
+          <span class="ledger-lbl">Scoring Difficulty</span>
+          <span class="ledger-val" id="ev-diff">78 / 100</span>
+        </div>
+
+        <button class="btn" onclick="startShotByShotRound()">PLAY ROUND SHOT-BY-SHOT</button>
+        <button class="btn btn-subtle" onclick="quickSimTournament()">QUICK-SIM 4 ROUNDS (AUTO)</button>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-title-row">
+          <span class="sheet-title">30-Week Official PGA Tour Schedule</span>
+        </div>
+        <div id="full-sched-list" style="max-height: 250px; overflow-y: auto; font-size: 11px;"></div>
+      </div>
+    </section>
+
+    <!-- 2. SHOT-BY-SHOT PLAY HOLE INTERACTION -->
+    <section id="tab-play" class="tab-view">
+      <div class="sheet" style="margin-bottom:8px;">
+        <div class="sheet-title-row">
+          <div>
+            <span class="badge badge-sig" id="play-mode-label">TOURNAMENT</span>
+            <span style="font-size:14px; font-weight:800; margin-left:6px;" id="play-hole-title">Hole 1 (Par 4, 445 Yds)</span>
+          </div>
+          <div style="font-family:var(--font-mono); font-weight:bold;" id="play-live-score">E (0)</div>
+        </div>
+
+        <!-- Live Shot Display -->
+        <div class="shot-box">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:bold; color:var(--pga-gold);" id="shot-lie-badge">TEE BOX</span>
+            <span style="font-size:11px; font-family:var(--font-mono); color:#cbd5e1;" id="shot-stroke-counter">Shot 1</span>
+          </div>
+
+          <div class="shot-stats-grid">
+            <div><span>TO CUP</span><strong id="shot-dist-cup">445 yds</strong></div>
+            <div><span>WIND</span><strong id="shot-wind">12 mph Cross L</strong></div>
+            <div><span>PIN SPOT</span><strong id="shot-pin">Back Left</strong></div>
+            <div><span>LIE QUALITY</span><strong id="shot-lie-cond">100% Clean</strong></div>
+          </div>
+
+          <div class="shot-log" id="shot-feed-log">
+            >> Welcome to the tee. Address your ball and choose your club and shot shape.
+          </div>
+        </div>
+
+        <!-- Dynamic Action Deck -->
+        <div id="shot-action-deck">
+          <!-- Populated dynamically: Tee, Approach, Bunker, Putting -->
+        </div>
+      </div>
+
+      <!-- Live Hole-by-Hole Scorecard -->
+      <div class="sheet">
+        <div class="sheet-title-row">
+          <span class="sheet-title">Live Match Scorecard</span>
+        </div>
+        <div id="live-scorecard-table" style="overflow-x:auto;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. TOUR FITTING STUDIO -->
+    <section id="tab-bag" class="tab-view">
+      <div class="sheet">
+        <div class="sheet-title-row">
+          <span class="sheet-title">Custom Bag & Hosel Tuning</span>
+          <span class="badge badge-sig">TOUR TRUCK</span>
+        </div>
+
+        <div class="ledger"><span class="ledger-lbl">Driver</span><span class="ledger-val" id="spec-driver">TaylorMade Qi10 LS</span></div>
+        <div class="ledger"><span class="ledger-lbl">Driver Shaft</span><span class="ledger-val" id="spec-shaft">Fujikura Ventus TR Black 6X</span></div>
+        <div class="ledger"><span class="ledger-lbl">Hosel Loft / Bias</span><span class="ledger-val" id="spec-hosel">9.0° Standard / Neutral</span></div>
+        <div class="ledger"><span class="ledger-lbl">Fairway Woods</span><span class="ledger-val" id="spec-wood">Callaway Paradym Ai Smoke 3W</span></div>
+        <div class="ledger"><span class="ledger-lbl">Irons (4-PW)</span><span class="ledger-val" id="spec-irons">Mizuno Pro 241 Blades</span></div>
+        <div class="ledger"><span class="ledger-lbl">Iron Shafts</span><span class="ledger-val" id="spec-iron-shaft">True Temper DG Tour Issue X100</span></div>
+        <div class="ledger"><span class="ledger-lbl">Wedges</span><span class="ledger-val" id="spec-wedges">Titleist Vokey SM10 (52/56/60)</span></div>
+        <div class="ledger"><span class="ledger-lbl">Putter Model</span><span class="ledger-val" id="spec-putter">L.A.B. Golf DF3 (Zero Torque)</span></div>
+        <div class="ledger"><span class="ledger-lbl">Grips</span><span class="ledger-val" id="spec-grip">Golf Pride MCC Plus4 Align</span></div>
+        <div class="ledger"><span class="ledger-lbl">Tour Ball</span><span class="ledger-val" id="spec-ball">Titleist Pro V1x 2027</span></div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-title-row">
+          <span class="sheet-title">Hosel & Loft Workshop</span>
+        </div>
+        <p style="font-size:11px; color:var(--pencil-gray); margin-bottom:8px;">Adjust driver loft sleeve to dial in trajectory and draw/fade dispersion bias:</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+          <button class="btn btn-subtle" onclick="tuneHoselLoft(-1.0)">Lower Loft (-1.0° Low Spin)</button>
+          <button class="btn btn-subtle" onclick="tuneHoselLoft(1.0)">Higher Loft (+1.0° High Launch)</button>
+          <button class="btn btn-subtle" onclick="tuneHoselBias('Draw')">Draw Bias (1° Closed)</button>
+          <button class="btn btn-subtle" onclick="tuneHoselBias('Fade')">Fade Bias (1° Open)</button>
+        </div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-title-row">
+          <span class="sheet-title">Tour Equipment Catalog</span>
+        </div>
+        <div style="display:flex; gap:5px; overflow-x:auto; padding-bottom:6px; margin-bottom:8px;">
+          <button class="btn btn-subtle" style="margin:0; padding:5px 8px; font-size:10px; white-space:nowrap;" onclick="loadCatalogCat('driver')">Drivers</button>
+          <button class="btn btn-subtle" style="margin:0; padding:5px 8px; font-size:10px; white-space:nowrap;" onclick="loadCatalogCat('shaft')">Driver Shafts</button>
+          <button class="btn btn-subtle" style="margin:0; padding:5px 8px; font-size:10px; white-space:nowrap;" onclick="loadCatalogCat('wood')">Fairways</button>
+          <button class="btn btn-subtle" style="margin:0; padding:5px 8px; font-size:10px; white-space:nowrap;" onclick="loadCatalogCat('irons')">Irons</button>
+          <button class="btn btn-subtle" style="margin:0; padding:5px 8px; font-size:10px; white-space:nowrap;" onclick="loadCatalogCat('wedges')">Wedges</button>
+          <button class="btn btn-subtle" style="margin:0; padding:5px 8px; font-size:10px; white-space:nowrap;" onclick="loadCatalogCat('putter')">Putters</button>
+          <button class="btn btn-subtle" style="margin:0; padding:5px 8px; font-size:10px; white-space:nowrap;" onclick="loadCatalogCat('ball')">Balls</button>
+        </div>
+        <div id="catalog-listing-container"></div>
+      </div>
+    </section>
+
+    <!-- 4. HIGH STAKES SKINS -->
+    <section id="tab-skins" class="tab-view">
+      <div class="sheet">
+        <div class="sheet-title-row">
+          <span class="sheet-title">9-Hole Match: High Stakes Skins</span>
+          <span class="badge badge-sig">MATCH PLAY</span>
+        </div>
+        <p style="font-size:11px; color:var(--pencil-gray); margin-bottom:10px;">Hit every shot against Scottie Scheffler and Rory McIlroy. Ties carry over the skin pot to the next hole!</p>
+
+        <label style="font-size:11px; color:var(--pencil-gray); font-weight:700;">CHOOSE VALUE PER HOLE:</label>
+        <select id="skins-wager-dropdown" style="width:100%; padding:9px; margin:6px 0 10px 0; border:1px solid var(--card-border); border-radius:6px; font-family:var(--font-mono); font-size:12px; background:#fff;">
+          <option value="25000">$25,000 / Hole ($225,000 Purse)</option>
+          <option value="100000" selected>$100,000 / Hole ($900,000 Purse)</option>
+          <option value="500000">$500,000 / Hole ($4,500,000 High Roller)</option>
+          <option value="1000000">$1,000,000 / Hole ($9,000,000 Tour Whale)</option>
+        </select>
+
+        <button class="btn btn-gold" onclick="startInteractiveSkins()">TEE OFF: PLAY 9 HOLES SHOT-BY-SHOT</button>
+      </div>
+
+      <div class="sheet" id="skins-recap-box" style="display:none;">
+        <div class="sheet-title-row">
+          <span class="sheet-title">Skins Match Scoreboard</span>
+        </div>
+        <div id="skins-recap-table" style="overflow-x:auto;"></div>
+      </div>
+    </section>
+
+    <!-- 5. CAREER & COMMISSIONER -->
+    <section id="tab-career" class="tab-view">
+      <div class="sheet">
+        <div class="sheet-title-row">
+          <span class="sheet-title">Tour Endorsements</span>
+          <span style="font-size:10px; font-weight:bold; color:var(--augusta-green);">OFFICIAL</span>
+        </div>
+        <div id="sponsorships-list"></div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-title-row">
+          <span class="sheet-title">Player Performance Dossier</span>
+        </div>
+        <div class="ledger"><span class="ledger-lbl">Events Entered</span><span class="ledger-val" id="st-starts">0</span></div>
+        <div class="ledger"><span class="ledger-lbl">Cuts Made</span><span class="ledger-val" id="st-cuts">0</span></div>
+        <div class="ledger"><span class="ledger-lbl">Top 10 Finishes</span><span class="ledger-val" id="st-top10s">0</span></div>
+        <div class="ledger"><span class="ledger-lbl">Tour Victories</span><span class="ledger-val" id="st-wins">0</span></div>
+        <div class="ledger"><span class="ledger-lbl">FedEx Cup Titles</span><span class="ledger-val" id="st-fedex">0</span></div>
+        <div class="ledger"><span class="ledger-lbl">Total Career Earnings</span><span class="ledger-val" id="st-earnings" style="color:var(--augusta-green); font-size:13px;">$0</span></div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-title-row">
+          <span class="sheet-title">Practice Facilities & Recovery</span>
+        </div>
+        <div class="ledger">
+          <div>
+            <strong>Driving Range (<span id="skill-pwr">65</span>)</strong>
+            <div style="font-size:10px; color:var(--pencil-gray);">+$3,500 | -15% Energy</div>
+          </div>
+          <button class="btn btn-subtle" style="width:auto; margin:0; padding:5px 10px;" onclick="trainAttr('power', 3500, 15)">TRAIN</button>
+        </div>
+        <div class="ledger">
+          <div>
+            <strong>Accuracy Grid (<span id="skill-acc">65</span>)</strong>
+            <div style="font-size:10px; color:var(--pencil-gray);">+$3,500 | -15% Energy</div>
+          </div>
+          <button class="btn btn-subtle" style="width:auto; margin:0; padding:5px 10px;" onclick="trainAttr('accuracy', 3500, 15)">TRAIN</button>
+        </div>
+        <div class="ledger">
+          <div>
+            <strong>Approach Targets / GIR (<span id="skill-gir">65</span>)</strong>
+            <div style="font-size:10px; color:var(--pencil-gray);">+$4,000 | -15% Energy</div>
+          </div>
+          <button class="btn btn-subtle" style="width:auto; margin:0; padding:5px 10px;" onclick="trainAttr('gir', 4000, 15)">TRAIN</button>
+        </div>
+        <div class="ledger">
+          <div>
+            <strong>Scrambling & Bunkers (<span id="skill-scram">65</span>)</strong>
+            <div style="font-size:10px; color:var(--pencil-gray);">+$3,800 | -15% Energy</div>
+          </div>
+          <button class="btn btn-subtle" style="width:auto; margin:0; padding:5px 10px;" onclick="trainAttr('scrambling', 3800, 15)">TRAIN</button>
+        </div>
+        <div class="ledger">
+          <div>
+            <strong>Putting Studio (<span id="skill-putt">65</span>)</strong>
+            <div style="font-size:10px; color:var(--pencil-gray);">+$3,000 | -10% Energy</div>
+          </div>
+          <button class="btn btn-subtle" style="width:auto; margin:0; padding:5px 10px;" onclick="trainAttr('putting', 3000, 10)">TRAIN</button>
+        </div>
+        <div class="ledger">
+          <div>
+            <strong>Rest Spa (+45 Energy)</strong>
+            <div style="font-size:10px; color:var(--pencil-gray);">Cost: $2,500</div>
+          </div>
+          <button class="btn btn-gold" style="width:auto; margin:0; padding:5px 10px;" onclick="visitSpa()">REST</button>
+        </div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-title-row">
+          <span class="sheet-title">Commissioner Console</span>
+        </div>
+        <button class="btn btn-gold" onclick="openGodConsole()">⚡ Tour Commissioner God Mode</button>
+        <button class="btn btn-subtle" onclick="openManual()">📖 Tour Operations Manual</button>
+        <button class="btn btn-subtle" style="color:#b91c1c; border-color:#fca5a5; margin-top:10px;" onclick="resetCareer()">Reset Career Data</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Thumb Navigation Bar -->
+  <nav class="bottom-bar">
+    <button class="bar-btn active" onclick="tabNav('tour')">
+      <span class="icon">⛳</span>
+      <span>Tour</span>
+    </button>
+    <button class="bar-btn" onclick="tabNav('play')">
+      <span class="icon">🏌️</span>
+      <span>Play Hole</span>
+    </button>
+    <button class="bar-btn" onclick="tabNav('bag')">
+      <span class="icon">🧰</span>
+      <span>Custom Bag</span>
+    </button>
+    <button class="bar-btn" onclick="tabNav('skins')">
+      <span class="icon">💵</span>
+      <span>Skins</span>
+    </button>
+    <button class="bar-btn" onclick="tabNav('career')">
+      <span class="icon">🏆</span>
+      <span>Career</span>
+    </button>
+  </nav>
+
+  <!-- Pop-up Overlay Modal -->
+  <div class="modal-shade" id="pga-modal">
+    <div class="modal-sheet">
+      <div class="sheet-title-row">
+        <span class="sheet-title" id="pga-modal-title">Official Score Record</span>
+        <button onclick="closeModal()" style="background:none; border:none; font-size:18px; font-weight:bold; cursor:pointer; color:var(--pencil-gray);">✕</button>
+      </div>
+      <div id="pga-modal-body" style="font-size:12px; line-height:1.5;"></div>
+      <button class="btn" onclick="closeModal()" style="margin-top:14px;">CONFIRM & CLOSE</button>
+    </div>
+  </div>
+
+  <script>
+    /* --- 30-WEEK PGA TOUR CALENDAR (EXPANDED) --- */
+    const CALENDAR = [
+      { week: 1, name: "The Sentry", course: "Kapalua Plantation Course", diff: 76, purse: 20000000, pts: 700, type: "sig", desc: "Elevation changes and trade winds across Maui." },
+      { week: 2, name: "Sony Open in Hawaii", course: "Waialae Country Club", diff: 71, purse: 8500000, pts: 500, type: "reg", desc: "Classic palm tree corridors and coastal flat greens." },
+      { week: 3, name: "The American Express", course: "PGA WEST Stadium", diff: 70, purse: 8800000, pts: 500, type: "reg", desc: "Pete Dye stadium island greens and desert hazards." },
+      { week: 4, name: "Farmers Insurance Open", course: "Torrey Pines (South)", diff: 82, purse: 9000000, pts: 500, type: "reg", desc: "Pacific marine fog, cliff tops, and penal thick Kikuyu rough." },
+      { week: 5, name: "AT&T Pebble Beach Pro-Am", course: "Pebble Beach Golf Links", diff: 83, purse: 20000000, pts: 700, type: "sig", desc: "Ocean cliffs of Carmel Bay and tiny undulating greens." },
+      { week: 6, name: "WM Phoenix Open", course: "TPC Scottsdale", diff: 73, purse: 9200000, pts: 500, type: "reg", desc: "Deafening colosseum at 16 and desert risk-reward par 5s." },
+      { week: 7, name: "The Genesis Invitational", course: "Riviera Country Club", diff: 83, purse: 20000000, pts: 700, type: "sig", desc: "Hogan's Alley: Kikuyu grass and eucalyptus tree obstacles." },
+      { week: 8, name: "Mexico Open", course: "Vidanta Vallarta", diff: 71, purse: 8100000, pts: 500, type: "reg", desc: "Long driving tracks and warm tropical breezes." },
+      { week: 9, name: "Cognizant Classic", course: "PGA National (Champion)", diff: 82, purse: 9000000, pts: 500, type: "reg", desc: "The terrifying Bear Trap water stretch." },
+      { week: 10, name: "Arnold Palmer Invitational", course: "Bay Hill Club & Lodge", diff: 85, purse: 20000000, pts: 700, type: "sig", desc: "Thick rough, rock-hard greens, and Arnie's lake on 6." },
+      { week: 11, name: "THE PLAYERS Championship", course: "TPC Sawgrass (Stadium)", diff: 87, purse: 25000000, pts: 750, type: "sig", desc: "The Flagship. Pete Dye's 17th Island Green." },
+      { week: 12, name: "Valspar Championship", course: "Innisbrook (Copperhead)", diff: 79, purse: 8400000, pts: 500, type: "reg", desc: "The Snake Pit finishing holes in Florida pines." },
+      { week: 13, name: "Texas Children's Houston Open", course: "Memorial Park Golf Course", diff: 76, purse: 9100000, pts: 500, type: "reg", desc: "Severe green complexes and runoff banks." },
+      { week: 14, name: "Valero Texas Open", course: "TPC San Antonio (Oaks)", diff: 77, purse: 8900000, pts: 500, type: "reg", desc: "Oak tree corridors and brush penalty areas." },
+      { week: 15, name: "Masters Tournament", course: "Augusta National Golf Club", diff: 89, purse: 20000000, pts: 750, type: "major", desc: "The Green Jacket. Amen Corner and lightning fast greens." },
+      { week: 16, name: "RBC Heritage", course: "Harbour Town Golf Links", diff: 80, purse: 20000000, pts: 700, type: "sig", desc: "Calibogue Sound lighthouse finish, tiny greens." },
+      { week: 17, name: "Zurich Classic of New Orleans", course: "TPC Louisiana", diff: 70, purse: 8900000, pts: 500, type: "reg", desc: "Pete Dye cypress swamp layout." },
+      { week: 18, name: "CJ CUP Byron Nelson", course: "TPC Craig Ranch", diff: 69, purse: 9500000, pts: 500, type: "reg", desc: "Birdie feast layout in suburban Dallas." },
+      { week: 19, name: "Truist Championship", course: "Quail Hollow Club", diff: 84, purse: 20000000, pts: 700, type: "sig", desc: "The Green Mile finishing stretch; demanding driving." },
+      { week: 20, name: "PGA Championship", course: "Valhalla Golf Club", diff: 86, purse: 19000000, pts: 750, type: "major", desc: "Floyd's Fork creek and undulating championship greens." },
+      { week: 21, name: "Charles Schwab Challenge", course: "Colonial Country Club", diff: 78, purse: 9100000, pts: 500, type: "reg", desc: "Horrible Horseshoe ball-striking test in Fort Worth." },
+      { week: 22, name: "The Memorial Tournament", course: "Muirfield Village Golf Club", diff: 88, purse: 20000000, pts: 700, type: "sig", desc: "Jack's Masterpiece in Dublin, OH. Thick rough, creek hazards, championship test." },
+      { week: 23, name: "RBC Canadian Open", course: "Hamilton Golf & CC", diff: 76, purse: 9400000, pts: 500, type: "reg", desc: "Historic Harry Colt parkland layout." },
+      { week: 24, name: "U.S. Open", course: "Pinehurst No. 2", diff: 91, purse: 21500000, pts: 750, type: "major", desc: "Donald Ross turtleback saucer greens and sand waste areas." },
+      { week: 25, name: "Travelers Championship", course: "TPC River Highlands", diff: 74, purse: 20000000, pts: 700, type: "sig", desc: "Risk-reward finishing loop around the quarry lake." },
+      { week: 26, name: "The Open Championship", course: "St Andrews (Old Course)", diff: 86, purse: 17000000, pts: 750, type: "major", desc: "The Home of Golf. Gale winds, cavernous pot bunkers, Hell Bunker." },
+      { week: 27, name: "3M Open", course: "TPC Twin Cities", diff: 73, purse: 8400000, pts: 500, type: "reg", desc: "Pure scoring conditions and lakeside pins." },
+      { week: 28, name: "FedEx St. Jude Championship", course: "TPC Southwind", diff: 81, purse: 20000000, pts: 2000, type: "playoff", desc: "Playoffs Leg 1 (Top 70). Bermuda grain and Memphis heat." },
+      { week: 29, name: "BMW Championship", course: "Castle Pines Golf Club", diff: 85, purse: 20000000, pts: 2000, type: "playoff", desc: "Playoffs Leg 2 (Top 50). Mile-high altitude and thick pines." },
+      { week: 30, name: "TOUR Championship", course: "East Lake Golf Club", diff: 88, purse: 100000000, pts: 0, type: "playoff", desc: "FedEx Finale (Top 30). Staggered starting strokes (-10 to E). Winner claims $25,000,000!" }
+    ];
+
+    /* --- DEEP TOUR EQUIPMENT CATALOG --- */
+    const CATALOG = {
+      driver: [
+        { brand: "TaylorMade", name: "Qi10 LS Tour Prototype", cost: 680, pwr: 4, acc: 2 },
+        { brand: "Callaway", name: "Paradym Ai Smoke Triple Diamond", cost: 680, pwr: 3, acc: 3 },
+        { brand: "PING", name: "G430 MAX 10K High-MOI", cost: 650, pwr: 2, acc: 5 },
+        { brand: "Titleist", name: "GT3 Precision Speed Project", cost: 720, pwr: 4, acc: 3 },
+        { brand: "Titleist", name: "GT4 Low-Spin Penetrator", cost: 740, pwr: 5, acc: 2 },
+        { brand: "Cobra", name: "Darkspeed LS Aero", cost: 600, pwr: 5, acc: 1 },
+        { brand: "Mizuno", name: "ST-G 440cc Tour Compact", cost: 620, pwr: 3, acc: 3 },
+        { brand: "PXG", name: "0311 Black Ops Tour-1", cost: 650, pwr: 4, acc: 2 },
+        { brand: "TaylorMade x McLaren", name: "Formula 1 Aero Carbon Concept", cost: 2400, pwr: 7, acc: 4 }
+      ],
+      shaft: [
+        { brand: "Fujikura", name: "Ventus TR Black 6X (Velocore+)", cost: 380, acc: 5, pwr: 2 },
+        { brand: "Fujikura", name: "Ventus Blue 6X Mid-Launch", cost: 380, acc: 4, pwr: 3 },
+        { brand: "Mitsubishi", name: "Tensei 1K Pro White 70TX", cost: 400, acc: 4, pwr: 3 },
+        { brand: "Mitsubishi", name: "Diamana WB (White Board) 73X", cost: 390, acc: 4, pwr: 3 },
+        { brand: "Graphite Design", name: "Tour AD DI-6 Orange", cost: 380, acc: 4, pwr: 2 },
+        { brand: "Graphite Design", name: "Tour AD VF-6 (Tiger Woods Spec)", cost: 420, acc: 5, pwr: 2 },
+        { brand: "Project X", name: "HZRDUS Smoke Green RDX 70 6.5TX", cost: 340, acc: 3, pwr: 4 },
+        { brand: "LA Golf", name: "Bryson Signature Series Low-Torque", cost: 480, acc: 6, pwr: 3 }
+      ],
+      wood: [
+        { brand: "TaylorMade", name: "Qi10 Tour 3-Wood (15° Titanium)", cost: 480, gir: 3, pwr: 2 },
+        { brand: "Callaway", name: "Paradym Ai Smoke Max 3W", cost: 460, gir: 3, pwr: 2 },
+        { brand: "PING", name: "G430 LST Tour 3-Wood", cost: 450, gir: 4, pwr: 1 },
+        { brand: "Titleist", name: "GT2 Deep Face Fairway", cost: 480, gir: 3, pwr: 2 },
+        { brand: "Cobra", name: "Darkspeed Tour 5-Wood (18°)", cost: 420, gir: 4, pwr: 1 }
+      ],
+      irons: [
+        { brand: "Mizuno", name: "Mizuno Pro 241 Pure Muscle Backs", cost: 1600, gir: 6 },
+        { brand: "Titleist", name: "T100 Tour Issue (4-PW)", cost: 1550, gir: 5 },
+        { brand: "Titleist", name: "620 MB Traditional Blades", cost: 1650, gir: 6 },
+        { brand: "TaylorMade", name: "P·7TW Tiger Woods Commemorative Blades", cost: 2200, gir: 7 },
+        { brand: "TaylorMade", name: "P·770 Players Forged Cavity", cost: 1450, gir: 4 },
+        { brand: "PING", name: "Blueprint T Pure Forged", cost: 1500, gir: 5 },
+        { brand: "Callaway", name: "Apex CB 24 Tour", cost: 1450, gir: 4 },
+        { brand: "Srixon", name: "Z-Forged II Muscle Backs", cost: 1400, gir: 5 },
+        { brand: "Nike", name: "VR Pro Forged Heritage Blades", cost: 2600, gir: 7 }
+      ],
+      wedges: [
+        { brand: "Titleist", name: "Vokey SM10 (52°F / 56°M / 60°T Grind)", cost: 620, scram: 6 },
+        { brand: "Titleist", name: "WedgeWorks Hand-Ground Low-Bounce K", cost: 750, scram: 7 },
+        { brand: "TaylorMade", name: "Milled Grind 4 (MG4) Raw Tour", cost: 580, scram: 5 },
+        { brand: "Callaway", name: "JAWS Raw Full-Face Face-Blast", cost: 550, scram: 5 },
+        { brand: "Cleveland", name: "RTX 6 ZipCore Tour Satin", cost: 520, scram: 4 },
+        { brand: "Mizuno", name: "T24 Denim Copper Forged", cost: 560, scram: 5 }
+      ],
+      putter: [
+        { brand: "L.A.B. Golf", name: "DF3 Lie Angle Balanced (Zero-Torque)", cost: 580, putt: 7 },
+        { brand: "L.A.B. Golf", name: "Mezz.1 MAX Sweeper", cost: 560, putt: 6 },
+        { brand: "L.A.B. Golf", name: "OZ.1i Tour Prototype Counterbalanced", cost: 650, putt: 7 },
+        { brand: "Scotty Cameron", name: "Super Select Newport 2 Tour Proto", cost: 650, putt: 5 },
+        { brand: "Scotty Cameron", name: "Phantom 9.5 Tour Wing Mallet", cost: 600, putt: 5 },
+        { brand: "Bettinardi", name: "BB1-Wide 303 Stainless Milled", cost: 550, putt: 5 },
+        { brand: "Odyssey", name: "Ai-One Jailbird Cruiser (Arm-Lock)", cost: 480, putt: 5 },
+        { brand: "PING", name: "PLD Milled Anser Tour Gold", cost: 500, putt: 4 },
+        { brand: "Evnroll", name: "ER2 MidBlade Sweet Face", cost: 460, putt: 4 },
+        { brand: "TaylorMade", name: "Spider Tour X Proto", cost: 450, putt: 4 }
+      ],
+      ball: [
+        { brand: "Titleist", name: "Pro V1x 2027 Tour Spec", cost: 75, all: 2 },
+        { brand: "TaylorMade", name: "TP5x Stripe Alignment", cost: 70, all: 2 },
+        { brand: "Callaway", name: "Chrome Tour X Triple Track", cost: 70, all: 2 },
+        { brand: "Srixon", name: "Z-Star Diamond Tour", cost: 65, all: 2 }
+      ]
+    };
+
+    const SPONSORSHIPS = [
+      { name: "Subway Pro Tour Deal", minRank: 125, minWins: 0, perEvent: 30000, events: 4 },
+      { name: "TaylorMade Global Staffer", minRank: 50, minWins: 0, perEvent: 140000, events: 6 },
+      { name: "Titleist Ball/Glove/Shoe Deal", minRank: 30, minWins: 1, perEvent: 400000, events: 8 },
+      { name: "BMW Championship Ambassador", minRank: 20, minWins: 2, perEvent: 800000, events: 10 },
+      { name: "Rolex Testimonee Crown", minRank: 10, minWins: 3, perEvent: 1800000, events: 12 },
+      { name: "Nike Worldwide Head-to-Toe", minRank: 3, minWins: 5, perEvent: 3500000, events: 14 },
+      { name: "NetJets Fleet Ambassador", minRank: 1, minWins: 7, perEvent: 6000000, events: 16 }
+    ];
+
+    /* --- USER STATE --- */
+    const DEFAULT_USER = {
+      name: "Tour Pro",
+      cash: 35000,
+      fedexPts: 0,
+      owgr: 150,
+      energy: 100,
+      week: 0,
+      year: 2027,
+      power: 68,
+      accuracy: 68,
+      gir: 68,
+      scrambling: 68,
+      putting: 68,
+      mental: 68,
+      starts: 0,
+      cuts: 0,
+      wins: 0,
+      top10s: 0,
+      earnings: 0,
+      fedexTitles: 0,
+      bag: {
+        driver: "TaylorMade Qi10 LS Tour Prototype",
+        shaft: "Fujikura Ventus TR Black 6X",
+        wood: "TaylorMade Qi10 Tour 3-Wood",
+        irons: "Mizuno Pro 241 Pure Muscle Backs",
+        wedges: "Titleist Vokey SM10 (52°F/56°M/60°T)",
+        putter: "L.A.B. Golf DF3 (Zero-Torque)",
+        ball: "Titleist Pro V1x 2027 Tour Spec"
+      },
+      tuning: { loft: 9.0, bias: "Neutral" },
+      gearBoosts: { pwr: 4, acc: 5, gir: 6, scram: 6, putt: 7, all: 2 },
+      activeSponsor: null,
+      sponsorLeft: 0
+    };
+
+    let user = loadUserData();
+
+    function loadUserData() {
+      const s = localStorage.getItem("pga2027_pro_save");
+      return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_USER));
+    }
+
+    function saveUserData() {
+      localStorage.setItem("pga2027_pro_save", JSON.stringify(user));
+      renderHUD();
+    }
+
+    function fmt(n) { return "$" + Math.floor(n).toLocaleString(); }
+
+    /* --- INTERACTIVE SHOT ENGINE STATE --- */
+    let matchState = {
+      active: false,
+      mode: "tournament", // "tournament" or "skins"
+      courseName: "",
+      totalHoles: 18,
+      currentHoleIdx: 0,
+      holeData: null,
+      stroke: 1,
+      distRemainingYds: 445,
+      lie: "Tee",
+      greenDistFeet: 0,
+      pinLocation: "Back Left",
+      windMph: 10,
+      windDir: "Cross Left",
+      holeScores: { user: [], ai1: [], ai2: [] },
+      skinsCarryover: 0,
+      skinsWager: 50000,
+      skinsLog: []
+    };
+
+    /* --- NAVIGATION --- */
+    function tabNav(tabId) {
+      document.querySelectorAll(".tab-view").forEach(v => v.classList.remove("active"));
+      document.querySelectorAll(".bar-btn").forEach(b => b.classList.remove("active"));
+      
+      const el = document.getElementById("tab-" + tabId);
+      if (el) el.classList.add("active");
+
+      const idx = ["tour", "play", "bag", "skins", "career"].indexOf(tabId);
+      if (idx !== -1) document.querySelectorAll(".bar-btn")[idx].classList.add("active");
+
+      if (tabId === "bag") loadCatalogCat('driver');
+      renderAllViews();
+    }
+
+    /* --- RENDER HUD & VIEWS --- */
+    function renderHUD() {
+      document.getElementById("hud-name").textContent = user.name.toUpperCase();
+      document.getElementById("hud-owgr").textContent = "#" + user.owgr;
+      document.getElementById("hud-cash").textContent = fmt(user.cash);
+      document.getElementById("hud-fedex").textContent = user.fedexPts.toLocaleString();
+      document.getElementById("hud-wins").textContent = user.wins;
+
+      const fill = document.getElementById("hud-energy");
+      fill.style.width = Math.min(100, Math.max(0, user.energy)) + "%";
+      fill.style.backgroundColor = user.energy > 35 ? "var(--pga-gold)" : "#dc2626";
+    }
+
+    function renderAllViews() {
+      renderHUD();
+
+      // Tour event
+      const ev = CALENDAR[user.week];
+      document.getElementById("ev-week-label").textContent = `Week ${user.week + 1} of ${CALENDAR.length} • Season ${user.year}`;
+      document.getElementById("ev-name").textContent = ev.name;
+      document.getElementById("ev-course").textContent = ev.course;
+      document.getElementById("ev-desc").textContent = ev.desc;
+      document.getElementById("ev-purse").textContent = fmt(ev.purse);
+      document.getElementById("ev-pts").textContent = ev.pts > 0 ? ev.pts.toLocaleString() + " PTS" : "TOUR FINALE";
+      document.getElementById("ev-diff").textContent = ev.diff + " / 100";
+
+      const badge = document.getElementById("ev-badge");
+      badge.textContent = ev.type.toUpperCase();
+      badge.className = "badge " + (ev.type === "major" ? "badge-major" : (ev.type === "playoff" ? "badge-playoff" : (ev.type === "sig" ? "badge-sig" : "badge-reg")));
+
+      // Sched list
+      let sHtml = "";
+      CALENDAR.forEach((c, i) => {
+        const isCur = i === user.week;
+        sHtml += `
+          <div class="ledger" style="${isCur ? 'background:var(--fairway-tint); font-weight:bold; padding-left:4px; border-left:3px solid var(--augusta-green);' : ''}">
+            <span>${i + 1}. ${c.name}</span>
+            <span style="font-size:10px; color:var(--pencil-gray);">${c.course.split(' ')[0]}</span>
+          </div>`;
+      });
+      document.getElementById("full-sched-list").innerHTML = sHtml;
+
+      // Bag specs
+      document.getElementById("spec-driver").textContent = user.bag.driver;
+      document.getElementById("spec-shaft").textContent = user.bag.shaft;
+      document.getElementById("spec-hosel").textContent = `${user.tuning.loft.toFixed(1)}° / ${user.tuning.bias} Bias`;
+      document.getElementById("spec-wood").textContent = user.bag.wood;
+      document.getElementById("spec-irons").textContent = user.bag.irons;
+      document.getElementById("spec-wedges").textContent = user.bag.wedges;
+      document.getElementById("spec-putter").textContent = user.bag.putter;
+      document.getElementById("spec-ball").textContent = user.bag.ball;
+
+      // Career Stats
+      document.getElementById("st-starts").textContent = user.starts;
+      document.getElementById("st-cuts").textContent = user.cuts;
+      document.getElementById("st-top10s").textContent = user.top10s;
+      document.getElementById("st-wins").textContent = user.wins;
+      document.getElementById("st-fedex").textContent = user.fedexTitles;
+      document.getElementById("st-earnings").textContent = fmt(user.earnings);
+
+      // Skills
+      document.getElementById("skill-pwr").textContent = user.power;
+      document.getElementById("skill-acc").textContent = user.accuracy;
+      document.getElementById("skill-gir").textContent = user.gir;
+      document.getElementById("skill-scram").textContent = user.scrambling;
+      document.getElementById("skill-putt").textContent = user.putting;
+
+      // Sponsors
+      let spHtml = "";
+      SPONSORSHIPS.forEach((s, idx) => {
+        const qual = user.owgr <= s.minRank && user.wins >= s.minWins;
+        const active = user.activeSponsor && user.activeSponsor.name === s.name;
+        spHtml += `
+          <div class="ledger">
+            <div>
+              <strong>${s.name}</strong>
+              <div style="font-size:10px; color:var(--pencil-gray);">${fmt(s.perEvent)} / event (${s.events} events)</div>
+              <div style="font-size:9px; color:${qual ? 'var(--augusta-green)' : '#94a3b8'};">
+                ${active ? `[ACTIVE: ${user.sponsorLeft} left]` : (qual ? 'ELIGIBLE' : `Requires: Top #${s.minRank}, ${s.minWins} Wins`)}
+              </div>
+            </div>
+            ${qual && !active ? `<button class="btn btn-subtle" style="width:auto; margin:0; padding:4px 8px; font-size:10px;" onclick="signSponsor(${idx})">SIGN</button>` : ''}
+          </div>`;
+      });
+      document.getElementById("sponsorships-list").innerHTML = spHtml;
+    }
+
+    /* --- CATALOG VIEWS --- */
+    function loadCatalogCat(cat) {
+      const items = CATALOG[cat];
+      let html = "";
+      items.forEach((item, idx) => {
+        const boostKey = Object.keys(item).find(k => !["brand", "name", "cost"].includes(k));
+        const val = item[boostKey];
+        html += `
+          <div class="ledger">
+            <div>
+              <strong>${item.brand} ${item.name}</strong>
+              <div style="font-size:10px; color:var(--augusta-green); font-family:var(--font-mono);">${fmt(item.cost)} | +${val} ${boostKey.toUpperCase()}</div>
+            </div>
+            <button class="btn btn-subtle" style="width:auto; margin:0; padding:5px 9px; font-size:10px;" onclick="buyItem('${cat}', ${idx})">FIT & EQUIP</button>
+          </div>`;
+      });
+      document.getElementById("catalog-listing-container").innerHTML = html;
+    }
+
+    function buyItem(cat, idx) {
+      const item = CATALOG[cat][idx];
+      if (user.cash < item.cost) { alert("Insufficient funds!"); return; }
+      user.cash -= item.cost;
+      user.bag[cat] = `${item.brand} ${item.name}`;
+
+      const boostKey = Object.keys(item).find(k => !["brand", "name", "cost"].includes(k));
+      if (boostKey === "all") user.gearBoosts.all = item[boostKey];
+      else user.gearBoosts[boostKey] = item[boostKey];
+
+      saveUserData();
+      renderAllViews();
+      alert(`Equipped ${item.brand} ${item.name} to your official bag!`);
+    }
+
+    function tuneHoselLoft(delta) {
+      user.tuning.loft = Math.max(7.5, Math.min(11.5, user.tuning.loft + delta));
+      saveUserData();
+      renderAllViews();
+    }
+
+    function tuneHoselBias(bias) {
+      user.tuning.bias = bias;
+      saveUserData();
+      renderAllViews();
+    }
+
+    /* --- INTERACTIVE SHOT ENGINE CORE --- */
+    function startShotByShotRound() {
+      const ev = CALENDAR[user.week];
+      matchState.active = true;
+      matchState.mode = "tournament";
+      matchState.courseName = ev.course;
+      matchState.totalHoles = 18;
+      matchState.currentHoleIdx = 0;
+      matchState.holeScores = { user: [], ai1: [], ai2: [] };
+      matchState.skinsLog = [];
+
+      user.energy = Math.max(5, user.energy - 25);
+      saveUserData();
+
+      setupHole(1);
+      tabNav("play");
+    }
+
+    function startInteractiveSkins() {
+      const wager = parseInt(document.getElementById("skins-wager-dropdown").value);
+      if (user.cash < wager * 2) {
+        alert("You need at least 2x the hole value in cash to cover match skins!");
+        return;
+      }
+      matchState.active = true;
+      matchState.mode = "skins";
+      matchState.courseName = "Muirfield Village Golf Club (Skins Lounge)";
+      matchState.totalHoles = 9;
+      matchState.currentHoleIdx = 0;
+      matchState.skinsWager = wager;
+      matchState.skinsCarryover = 0;
+      matchState.holeScores = { user: [], ai1: [], ai2: [] };
+      matchState.skinsLog = [];
+
+      setupHole(1);
+      tabNav("play");
+    }
+
+    function setupHole(holeNum) {
+      matchState.currentHoleIdx = holeNum - 1;
+      // Hole blueprint
+      const pars = [4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 3, 4, 5, 4, 3, 4, 5, 4];
+      const yards = [445, 460, 185, 545, 430, 475, 210, 565, 420, 455, 175, 410, 570, 440, 195, 465, 535, 480];
+      
+      const par = pars[(holeNum - 1) % 18];
+      const yardage = yards[(holeNum - 1) % 18];
+
+      const winds = ["Calm 4 mph", "8 mph Crosswind L", "14 mph In Face", "12 mph Downwind", "16 mph Gusting R"];
+      const pins = ["Front Pin (Sucker)", "Center Pin (Accessible)", "Back Left (Tucked)", "Back Right (Ridge)"];
+
+      matchState.holeData = { num: holeNum, par: par, yards: yardage };
+      matchState.stroke = 1;
+      matchState.distRemainingYds = yardage;
+      matchState.lie = "Tee";
+      matchState.greenDistFeet = 0;
+      matchState.windMph = Math.floor(Math.random() * 12 + 4);
+      matchState.windDir = winds[Math.floor(Math.random() * winds.length)];
+      matchState.pinLocation = pins[Math.floor(Math.random() * pins.length)];
+
+      updateShotUI(`>> You step onto the ${holeNum}th tee at ${matchState.courseName}. Par ${par}, ${yardage} yards. Pin is ${matchState.pinLocation}.`);
+      renderShotActionDeck();
+    }
+
+    function updateShotUI(logMsg) {
+      document.getElementById("play-mode-label").textContent = matchState.mode.toUpperCase();
+      document.getElementById("play-hole-title").textContent = `Hole ${matchState.holeData.num} (Par ${matchState.holeData.par}, ${matchState.holeData.yards} Yds)`;
+
+      // Score to par
+      const scoreSum = matchState.holeScores.user.reduce((a, b) => a + b, 0);
+      const parSum = [4,4,3,5,4,4,3,5,4,4,3,4,5,4,3,4,5,4].slice(0, matchState.holeScores.user.length).reduce((a,b)=>a+b, 0);
+      const diff = scoreSum - parSum;
+      document.getElementById("play-live-score").textContent = diff === 0 ? "E (0)" : (diff > 0 ? `+${diff}` : `${diff}`);
+
+      document.getElementById("shot-lie-badge").textContent = matchState.lie.toUpperCase();
+      document.getElementById("shot-stroke-counter").textContent = `Shot ${matchState.stroke}`;
+      
+      document.getElementById("shot-dist-cup").textContent = matchState.lie === "Green" ? `${matchState.greenDistFeet} ft` : `${matchState.distRemainingYds} yds`;
+      document.getElementById("shot-wind").textContent = matchState.windDir;
+      document.getElementById("shot-pin").textContent = matchState.pinLocation.split(' ')[0];
+      
+      let lieCond = "100% Clean";
+      if (matchState.lie === "Rough") lieCond = "75% Flier Lie";
+      if (matchState.lie === "Deep Rough") lieCond = "50% Buried";
+      if (matchState.lie === "Fairway Bunker") lieCond = "Sand Dispersion";
+      if (matchState.lie === "Greenside Bunker") lieCond = "Plugged Lie Risk";
+      document.getElementById("shot-lie-cond").textContent = lieCond;
+
+      if (logMsg) {
+        const feed = document.getElementById("shot-feed-log");
+        feed.innerHTML += `<br>${logMsg}`;
+        feed.scrollTop = feed.scrollHeight;
+      }
+
+      renderLiveScorecard();
+    }
+
+    function renderShotActionDeck() {
+      const deck = document.getElementById("shot-action-deck");
+      let html = "";
+
+      if (matchState.lie === "Tee") {
+        html = `
+          <div style="font-size:11px; font-weight:bold; margin-bottom:6px; color:var(--augusta-green);">SELECT TEE SHOT:</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <button class="btn btn-subtle" onclick="takeTeeShot('driver_bomb')">💥 Bomb Driver (Full Send)</button>
+            <button class="btn btn-subtle" onclick="takeTeeShot('driver_stinger')">🎯 Low Stinger (Max Fairway)</button>
+            <button class="btn btn-subtle" onclick="takeTeeShot('3wood')">🪵 3-Wood (Fairway Target)</button>
+            <button class="btn btn-subtle" onclick="takeTeeShot('utility_iron')">🗡️ 2-Iron / Driving Iron</button>
+          </div>`;
+      } else if (matchState.lie === "Fairway" || matchState.lie === "Rough" || matchState.lie === "Fairway Bunker") {
+        html = `
+          <div style="font-size:11px; font-weight:bold; margin-bottom:6px; color:var(--augusta-green);">APPROACH SHOT (${matchState.distRemainingYds} yds remaining):</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <button class="btn btn-subtle" onclick="takeApproachShot('attack_pin')">🎯 Attack Pin (High Spin)</button>
+            <button class="btn btn-subtle" onclick="takeApproachShot('center_green')">🟢 Safe to Fat of Green</button>
+            <button class="btn btn-subtle" onclick="takeApproachShot('punch_wind')">🌬️ Low Punch / Knockdown</button>
+            <button class="btn btn-subtle" onclick="takeApproachShot('layup')">🛡️ Layup Safe (Wedge Range)</button>
+          </div>`;
+      } else if (matchState.lie === "Greenside Bunker") {
+        html = `
+          <div style="font-size:11px; font-weight:bold; margin-bottom:6px; color:var(--augusta-green);">SAND SHOT (Bunker):</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <button class="btn btn-subtle" onclick="takeBunkerShot('open_face_blast')">🏖️ Open-Face Sand Blast</button>
+            <button class="btn btn-subtle" onclick="takeBunkerShot('pick_clean')">🤏 Pick it Clean (Risk Thin)</button>
+          </div>`;
+      } else if (matchState.lie === "Rough Scramble") {
+        html = `
+          <div style="font-size:11px; font-weight:bold; margin-bottom:6px; color:var(--augusta-green);">GREENSIDE SCRAMBLE:</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <button class="btn btn-subtle" onclick="takeScrambleShot('flop')">🪂 High Flop Shot (Soft Touch)</button>
+            <button class="btn btn-subtle" onclick="takeScrambleShot('bump')">🎳 Bump & Run (Roll to Cup)</button>
+          </div>`;
+      } else if (matchState.lie === "Green") {
+        html = `
+          <div style="font-size:11px; font-weight:bold; margin-bottom:6px; color:var(--augusta-green);">PUTTING (${matchState.greenDistFeet} ft for ${getParRelativeTerm()}):</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <button class="btn btn-subtle" onclick="takePutt('firm')">⚡ Firm at Back of Cup</button>
+            <button class="btn btn-subtle" onclick="takePutt('die_in')">🕳️ Die-in-the-Hole (Play Break)</button>
+            <button class="btn btn-subtle" onclick="takePutt('lag')">🛡️ Safe Lag (Eliminate 3-Putt)</button>
+          </div>`;
+      }
+
+      deck.innerHTML = html;
+    }
+
+    function getParRelativeTerm() {
+      const par = matchState.holeData.par;
+      const cur = matchState.stroke;
+      if (cur === par - 2) return "Albatross / Eagle";
+      if (cur === par - 1) return "Eagle";
+      if (cur === par) return "Birdie";
+      if (cur === par + 1) return "Par";
+      if (cur === par + 2) return "Bogey";
+      return "Stroke";
+    }
+
+    /* --- SHOT EXECUTION LOGIC --- */
+    function takeTeeShot(type) {
+      let powerStat = user.power + user.gearBoosts.pwr + user.gearBoosts.all;
+      let accStat = user.accuracy + user.gearBoosts.acc + user.gearBoosts.all;
+      let yards = 280;
+      let lie = "Fairway";
+      let text = "";
+
+      if (type === "driver_bomb") {
+        yards = Math.floor(powerStat * 3.3 + Math.random() * 25);
+        if (Math.random() * 100 > accStat + 10) {
+          lie = Math.random() > 0.4 ? "Rough" : "Fairway Bunker";
+          text = `>> BOMB TEE SHOT! Carried ${yards} yds but pushed into the ${lie}!`;
+        } else {
+          lie = "Fairway";
+          text = `>> CRUSHED! ${yards} yards dead center of the fairway!`;
+        }
+      } else if (type === "driver_stinger") {
+        yards = Math.floor(powerStat * 2.9 + 10);
+        lie = "Fairway";
+        text = `>> Low piercing tour stinger travels ${yards} yds safely into the short grass.`;
+      } else if (type === "3wood") {
+        yards = Math.floor(powerStat * 2.7 + 10);
+        lie = "Fairway";
+        text = `>> 3-Wood finds the fairway tier at ${yards} yards. Perfect position.`;
+      } else {
+        yards = 235;
+        lie = "Fairway";
+        text = `>> Stinger 2-iron lands softly in the fairway corridor at 235 yards.`;
+      }
+
+      matchState.distRemainingYds = Math.max(0, matchState.distRemainingYds - yards);
+      matchState.stroke++;
+      matchState.lie = matchState.distRemainingYds <= 0 ? "Green" : lie;
+      if (matchState.lie === "Green") matchState.greenDistFeet = 15;
+
+      updateShotUI(text);
+      renderShotActionDeck();
+    }
+
+    function takeApproachShot(type) {
+      let girStat = user.gir + user.gearBoosts.gir + user.gearBoosts.all;
+      let dist = matchState.distRemainingYds;
+      let text = "";
+
+      if (type === "layup") {
+        matchState.distRemainingYds = 75;
+        matchState.stroke++;
+        matchState.lie = "Fairway";
+        updateShotUI(">> Laid up safely to 75 yards out. Smooth wedge approach left.");
+        renderShotActionDeck();
+        return;
+      }
+
+      let roll = Math.random() * 100 + (girStat - 65);
+      if (type === "attack_pin") roll += (Math.random() > 0.4 ? 15 : -25);
+
+      if (roll > 60) {
+        // Hit green!
+        matchState.lie = "Green";
+        matchState.greenDistFeet = Math.max(3, Math.floor(Math.random() * 25 + (100 - girStat) * 0.3));
+        text = `>> DART! Ball spins back on the green surface and stops ${matchState.greenDistFeet} feet from the cup!`;
+      } else if (roll > 35) {
+        matchState.lie = "Rough Scramble";
+        matchState.distRemainingYds = 15;
+        text = `>> Approach trickled off the putting surface into the greenside collection area.`;
+      } else {
+        matchState.lie = "Greenside Bunker";
+        matchState.distRemainingYds = 18;
+        text = `>> Errant strike caught the greenside sand bunker! Sand save required.`;
+      }
+
+      matchState.stroke++;
+      updateShotUI(text);
+      renderShotActionDeck();
+    }
+
+    function takeBunkerShot(type) {
+      let scram = user.scrambling + user.gearBoosts.scram + user.gearBoosts.all;
+      matchState.stroke++;
+      matchState.lie = "Green";
+
+      if (type === "open_face_blast" && scram + Math.random() * 30 > 70) {
+        matchState.greenDistFeet = Math.floor(Math.random() * 8 + 3);
+        updateShotUI(`>> Splash! Pristine sand blast stops just ${matchState.greenDistFeet} feet from the hole!`);
+      } else {
+        matchState.greenDistFeet = Math.floor(Math.random() * 18 + 10);
+        updateShotUI(`>> Out of the sand, but rolls out to ${matchState.greenDistFeet} feet.`);
+      }
+      renderShotActionDeck();
+    }
+
+    function takeScrambleShot(type) {
+      let scram = user.scrambling + user.gearBoosts.scram + user.gearBoosts.all;
+      matchState.stroke++;
+      matchState.lie = "Green";
+
+      if (scram + Math.random() * 25 > 65) {
+        matchState.greenDistFeet = Math.floor(Math.random() * 6 + 2);
+        updateShotUI(`>> Delicate chip checks up beautifully! ${matchState.greenDistFeet} feet remaining.`);
+      } else {
+        matchState.greenDistFeet = Math.floor(Math.random() * 15 + 8);
+        updateShotUI(`>> Chip runs past the cup; ${matchState.greenDistFeet} feet back up the slope.`);
+      }
+      renderShotActionDeck();
+    }
+
+    function takePutt(type) {
+      let puttStat = user.putting + user.gearBoosts.putt + user.gearBoosts.all;
+      let dist = matchState.greenDistFeet;
+      
+      // Zero-torque putter bonus
+      if (user.bag.putter.includes("L.A.B.") || user.bag.putter.includes("Zero-Torque")) {
+        puttStat += 6;
+      }
+
+      let makeProb = Math.max(5, Math.min(95, (puttStat * 1.3) - (dist * 2.8)));
+      if (type === "firm") makeProb += 4;
+      if (type === "lag" && dist > 15) makeProb -= 10;
+
+      let roll = Math.random() * 100;
+
+      if (roll <= makeProb || dist <= 2) {
+        // CUPPED!
+        const totalScore = matchState.stroke;
+        const par = matchState.holeData.par;
+        const diff = totalScore - par;
+        let term = diff === -2 ? "EAGLE" : (diff === -1 ? "BIRDIE" : (diff === 0 ? "PAR" : (diff === 1 ? "BOGEY" : "DOUBLE BOGEY")));
+
+        matchState.holeScores.user.push(totalScore);
+
+        updateShotUI(`>> 🎯 IN THE CUP! Poured it right into the heart for a **${term}**! (${totalScore} strokes)`);
+
+        finishHole();
+      } else {
+        // Missed putt
+        matchState.stroke++;
+        matchState.greenDistFeet = Math.max(1, Math.floor(Math.random() * 3 + 1));
+        updateShotUI(`>> Lip out! Rolls ${matchState.greenDistFeet} feet past the cup.`);
+        renderShotActionDeck();
+      }
+    }
+
+    function finishHole() {
+      // Simulate opponent pros on this hole
+      const par = matchState.holeData.par;
+      const ai1Score = Math.random() > 0.4 ? par : (Math.random() > 0.5 ? par - 1 : par + 1);
+      const ai2Score = Math.random() > 0.35 ? par : (Math.random() > 0.4 ? par - 1 : par + 1);
+
+      matchState.holeScores.ai1.push(ai1Score);
+      matchState.holeScores.ai2.push(ai2Score);
+
+      if (matchState.mode === "skins") {
+        const uScore = matchState.holeScores.user[matchState.holeScores.user.length - 1];
+        const low = Math.min(uScore, ai1Score, ai2Score);
+        const pot = matchState.skinsWager + matchState.skinsCarryover;
+
+        let winners = [];
+        if (uScore === low) winners.push("You");
+        if (ai1Score === low) winners.push("Scottie");
+        if (ai2Score === low) winners.push("Rory");
+
+        if (winners.length === 1) {
+          const w = winners[0];
+          matchState.skinsLog.push(`Hole ${matchState.holeData.num}: ${w} WINS SKIN (${fmt(pot)})`);
+          if (w === "You") user.cash += pot;
+          else user.cash -= pot;
+          matchState.skinsCarryover = 0;
+        } else {
+          matchState.skinsLog.push(`Hole ${matchState.holeData.num}: Halved (Tie). Carryover pushes pot.`);
+          matchState.skinsCarryover += matchState.skinsWager;
+        }
+      }
+
+      saveUserData();
+
+      if (matchState.currentHoleIdx + 1 < matchState.totalHoles) {
+        document.getElementById("shot-action-deck").innerHTML = `
+          <button class="btn btn-gold" onclick="setupHole(${matchState.currentHoleIdx + 2})">NEXT HOLE ➔ (Hole ${matchState.currentHoleIdx + 2})</button>
+        `;
+      } else {
+        completeMatch();
+      }
+    }
+
+    function completeMatch() {
+      const uTotal = matchState.holeScores.user.reduce((a, b) => a + b, 0);
+      const pars = [4,4,3,5,4,4,3,5,4,4,3,4,5,4,3,4,5,4].slice(0, matchState.totalHoles);
+      const parSum = pars.reduce((a, b) => a + b, 0);
+      const diff = uTotal - parSum;
+
+      let summaryHtml = `
+        <div style="font-family:var(--font-serif); margin-bottom:8px;">
+          <h3 style="color:var(--augusta-green);">${matchState.courseName}</h3>
+          <p>Score: <strong>${uTotal} (${diff > 0 ? '+'+diff : (diff===0?'E':diff)})</strong></p>
+        </div>`;
+
+      if (matchState.mode === "skins") {
+        summaryHtml += `
+          <div style="font-family:var(--font-mono); font-size:11px; margin-top:8px;">
+            ${matchState.skinsLog.join('<br>')}
+          </div>
+          <div style="margin-top:10px; font-weight:bold; color:var(--augusta-green);">
+            Updated Bankroll: ${fmt(user.cash)}
+          </div>`;
+        document.getElementById("skins-recap-box").style.display = "block";
+        document.getElementById("skins-recap-table").innerHTML = summaryHtml;
+      } else {
+        // Tournament round payout
+        user.starts++;
+        user.cuts++;
+        const prize = Math.floor(CALENDAR[user.week].purse * (diff < 0 ? 0.08 : 0.02));
+        user.cash += prize;
+        user.earnings += prize;
+        user.fedexPts += diff < 0 ? 300 : 75;
+        user.week = (user.week + 1) % CALENDAR.length;
+
+        summaryHtml += `
+          <div style="background:var(--fairway-tint); padding:10px; border-radius:6px; font-size:11px; margin-top:8px;">
+            <div>Official Round Purse Check: <strong>${fmt(prize)}</strong></div>
+            <div>FedEx Points: <strong>+${diff < 0 ? 300 : 75}</strong></div>
+          </div>`;
+        saveUserData();
+      }
+
+      openCustomModal("MATCH ROUND COMPLETE", summaryHtml);
+
+      document.getElementById("shot-action-deck").innerHTML = `
+        <button class="btn" onclick="tabNav('tour')">RETURN TO TOUR SCHEDULE</button>
+      `;
+    }
+
+    function renderLiveScorecard() {
+      const uScores = matchState.holeScores.user;
+      let ths = "";
+      let tds = "";
+
+      for (let i = 0; i < matchState.totalHoles; i++) {
+        ths += `<th>${i + 1}</th>`;
+        const sc = uScores[i];
+        if (sc !== undefined) {
+          const pars = [4,4,3,5,4,4,3,5,4,4,3,4,5,4,3,4,5,4];
+          const p = pars[i % 18];
+          if (sc === p - 2) tds += `<td><span class="circle-eagle">${sc}</span></td>`;
+          else if (sc === p - 1) tds += `<td><span class="circle-birdie">${sc}</span></td>`;
+          else if (sc === p + 1) tds += `<td><span class="square-bogey">${sc}</span></td>`;
+          else if (sc >= p + 2) tds += `<td><span class="square-double">${sc}</span></td>`;
+          else tds += `<td>${sc}</td>`;
+        } else {
+          tds += `<td>-</td>`;
+        }
+      }
+
+      const tableHtml = `
+        <table class="score-tbl">
+          <thead><tr>${ths}</tr></thead>
+          <tbody><tr>${tds}</tr></tbody>
+        </table>`;
+      document.getElementById("live-scorecard-table").innerHTML = tableHtml;
+    }
+
+    /* --- QUICK SIM TOURNAMENT OPTION --- */
+    function quickSimTournament() {
+      const ev = CALENDAR[user.week];
+      const pRating = (user.power*0.15)+(user.accuracy*0.2)+(user.gir*0.25)+(user.scrambling*0.2)+(user.putting*0.2);
+      
+      let total = 0;
+      for (let r = 0; r < 4; r++) {
+        let diffCourse = (ev.diff - 70) * 0.2;
+        let score = Math.round(72 + (75 - pRating) * 0.25 + diffCourse + (Math.random() * 6 - 3));
+        total += (score - 72);
+      }
+
+      user.starts++;
+      user.cuts++;
+      let earnings = Math.floor(ev.purse * (total < 0 ? 0.05 : 0.01));
+      let pts = total < 0 ? 250 : 40;
+
+      if (total <= -10) {
+        user.wins++;
+        earnings = Math.floor(ev.purse * 0.18);
+        pts = ev.pts;
+      }
+
+      user.cash += earnings;
+      user.earnings += earnings;
+      user.fedexPts += pts;
+      user.week = (user.week + 1) % CALENDAR.length;
+      user.energy = Math.max(10, user.energy - 30);
+      saveUserData();
+
+      openCustomModal(`${ev.name} - Quick Sim Results`, `
+        <p>4-Round Final Total: <strong>${total > 0 ? '+'+total : total}</strong></p>
+        <p>Official Purse Check: <strong>${fmt(earnings)}</strong></p>
+        <p>FedEx Points Earned: <strong>+${pts}</strong></p>
+      `);
+      renderAllViews();
+    }
+
+    /* --- SPONSOR CONTRACTS & PRACTICE --- */
+    function signSponsor(idx) {
+      const s = SPONSORSHIPS[idx];
+      user.activeSponsor = s;
+      user.sponsorLeft = s.events;
+      saveUserData();
+      renderAllViews();
+      alert(`Signed multi-year endorsement deal with ${s.name}!`);
+    }
+
+    function trainAttr(attr, cost, energyBurn) {
+      if (user.cash < cost) { alert("Insufficient funds!"); return; }
+      if (user.energy < energyBurn) { alert("Too exhausted. Head to the Rest Spa!"); return; }
+      if (user[attr] >= 99) { alert("Stat maxed at 99!"); return; }
+
+      user.cash -= cost;
+      user.energy -= energyBurn;
+      user[attr] = Math.min(99, user[attr] + Math.floor(Math.random() * 2 + 1));
+      saveUserData();
+      renderAllViews();
+    }
+
+    function visitSpa() {
+      if (user.cash < 2500) { alert("Need $2,500 for recovery therapy!"); return; }
+      user.cash -= 2500;
+      user.energy = Math.min(100, user.energy + 45);
+      saveUserData();
+      renderAllViews();
+    }
+
+    /* --- MODALS & CHEATS --- */
+    function openCustomModal(title, body) {
+      document.getElementById("pga-modal-title").textContent = title;
+      document.getElementById("pga-modal-body").innerHTML = body;
+      document.getElementById("pga-modal").classList.add("active");
+    }
+
+    function closeModal() {
+      document.getElementById("pga-modal").classList.remove("active");
+    }
+
+    function openGodConsole() {
+      openCustomModal("⚡ Tour Commissioner God Console", `
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="btn btn-gold" onclick="godCash()">+ $25,000,000 Tour Cash</button>
+          <button class="btn" onclick="godMaxStats()">Max Skills to 99</button>
+          <button class="btn" onclick="godWarpMuirfield()">Warp to Muirfield Village CC (Week 22)</button>
+          <button class="btn" onclick="godRankOne()">Set OWGR to World #1</button>
+          <button class="btn" onclick="godFedEx()">+ 5,000 FedEx Points</button>
+        </div>
+      `);
+    }
+
+    function godCash() { user.cash += 25000000; saveUserData(); closeModal(); }
+    function godMaxStats() {
+      user.power = user.accuracy = user.gir = user.scrambling = user.putting = user.mental = 99;
+      user.energy = 100;
+      saveUserData(); closeModal();
+    }
+    function godWarpMuirfield() { user.week = 21; saveUserData(); closeModal(); }
+    function godRankOne() { user.owgr = 1; saveUserData(); closeModal(); }
+    function godFedEx() { user.fedexPts += 5000; saveUserData(); closeModal(); }
+
+    function openManual() {
+      openCustomModal("Official Tour Operations Manual", `
+        <div style="font-size:11px; line-height:1.6;">
+          <p><strong>1. Shot-by-Shot Engine:</strong> Select your club, shape, approach aggression, and putting line. Wind and lie penalty dictate your ball dispersion.</p>
+          <p><strong>2. Deep Fitting:</strong> Equip top brand equipment (Mizuno, TaylorMade, Callaway, Titleist, L.A.B. Golf, Scotty Cameron) and adjust your driver hosel loft.</p>
+          <p><strong>3. High Stakes Skins:</strong> Play 9-hole matches against Scheffler and McIlroy. Halved holes push to carryover pots up to $9M.</p>
+        </div>
+      `);
+    }
+
+    function resetCareer() {
+      if (confirm("Reset tour career back to rookie season?")) {
+        localStorage.removeItem("pga2027_pro_save");
+        user = JSON.parse(JSON.stringify(DEFAULT_USER));
+        saveUserData();
+        renderAllViews();
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      renderAllViews();
+    });
+  </script>
+</body>
+</html>
