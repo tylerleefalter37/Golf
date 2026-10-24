@@ -509,12 +509,12 @@
           </div>
         </div>
 
-        <!-- Standard Shot Controls -->
+        <!-- Standard Shot Controls (Permanent DOM structure) -->
         <div id="shot-controls-wrapper">
           <div class="shot-deck">
             <div class="shot-control-group">
               <label>Select Club</label>
-              <select id="shot-club-select" class="shot-select"></select>
+              <select id="shot-club-select" class="shot-select" onchange="onClubChange()"></select>
             </div>
             <div class="shot-control-group">
               <label>Trajectory / Shape</label>
@@ -549,7 +549,7 @@
           <button class="btn btn-callaway" id="btn-fire-shot" onclick="fireShotAction()">EXECUTE SHOT 💥</button>
         </div>
 
-        <!-- Putting Interface -->
+        <!-- Putting Interface (Permanent DOM structure) -->
         <div id="putting-controls-wrapper" style="display:none;">
           <div class="sheet" style="background:var(--fairway-tint); border:1px solid var(--augusta-green); padding:10px; margin-top:8px;">
             <div style="font-size:12px; font-weight:bold; color:var(--augusta-green); margin-bottom:4px;">
@@ -585,6 +585,9 @@
             <button class="btn btn-callaway" onclick="firePuttAction()">STROKE PUTT 🎯</button>
           </div>
         </div>
+
+        <!-- Dedicated Hole Transition / Next Hole Wrapper -->
+        <div id="hole-transition-wrapper" style="display:none; margin-top:8px;"></div>
       </div>
 
       <!-- Live Scorecard Grid -->
@@ -605,7 +608,6 @@
           <span class="badge badge-callaway">5 WAYS TO PLAY</span>
         </div>
 
-        <!-- Mode 1: Tour -->
         <div class="ledger" style="padding:10px 0;">
           <div>
             <strong>1. PGA Tour Championship Campaign</strong>
@@ -614,7 +616,6 @@
           <button class="btn btn-subtle" style="width:auto; margin:0; padding:6px 12px;" onclick="tabNav('tour')">SELECT</button>
         </div>
 
-        <!-- Mode 2: Skins -->
         <div class="ledger" style="padding:10px 0;">
           <div>
             <strong>2. High Stakes Skins Match (9 Holes)</strong>
@@ -623,7 +624,6 @@
           <button class="btn btn-gold" style="width:auto; margin:0; padding:6px 12px;" onclick="startMode('skins')">PLAY SKINS</button>
         </div>
 
-        <!-- Mode 3: 1v1 Sunday Match Play Showdown -->
         <div class="ledger" style="padding:10px 0;">
           <div>
             <strong>3. 1v1 Sunday Match Play Showdown</strong>
@@ -632,7 +632,6 @@
           <button class="btn btn-callaway" style="width:auto; margin:0; padding:6px 12px;" onclick="startMode('matchplay')">PLAY 1v1</button>
         </div>
 
-        <!-- Mode 4: Long Drive & Skills Combine -->
         <div class="ledger" style="padding:10px 0;">
           <div>
             <strong>4. Apex Long Drive & Skills Combine</strong>
@@ -641,7 +640,6 @@
           <button class="btn btn-subtle" style="width:auto; margin:0; padding:6px 12px;" onclick="startSkillsCombine()">COMBINE</button>
         </div>
 
-        <!-- Mode 5: Sudden Death Playoff -->
         <div class="ledger" style="padding:10px 0;">
           <div>
             <strong>5. Sudden Death 18th Hole Playoff</strong>
@@ -651,7 +649,6 @@
         </div>
       </div>
 
-      <!-- Skills Combine Results Display -->
       <div class="sheet" id="combine-results-card" style="display:none;">
         <div class="sheet-title-row">
           <span class="sheet-title">Skills Combine Report</span>
@@ -679,7 +676,6 @@
         <div class="ledger"><span class="ledger-lbl">Tour Ball</span><span class="ledger-val" id="spec-ball">Callaway Chrome Tour X Triple Track</span></div>
       </div>
 
-      <!-- Tour R&D Workshop -->
       <div class="sheet">
         <div class="sheet-title-row">
           <span class="sheet-title">Callaway R&D Van: Sole Grinds & Weighting</span>
@@ -712,7 +708,6 @@
         </div>
       </div>
 
-      <!-- Equipment Catalog -->
       <div class="sheet">
         <div class="sheet-title-row">
           <span class="sheet-title">Callaway Official Tour Vault</span>
@@ -836,7 +831,7 @@
     </button>
   </nav>
 
-  <!-- Generic Pop-up Overlay Modal -->
+  <!-- Modal Shade -->
   <div class="modal-shade" id="pga-modal">
     <div class="modal-sheet">
       <div class="sheet-title-row">
@@ -864,7 +859,6 @@
           this.init();
           const t = this.ctx.currentTime;
           if (type === "driver") {
-            // Punchy low sine boom + crisp filtered white noise crack
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = "sine";
@@ -877,7 +871,6 @@
             osc.start(t);
             osc.stop(t + 0.2);
 
-            // Crack noise
             const b = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.05, this.ctx.sampleRate);
             const d = b.getChannelData(0);
             for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -918,7 +911,6 @@
             osc.start(t);
             osc.stop(t + 0.06);
           } else if (type === "cup") {
-            // Hollow plastic double rattle
             [0, 0.07].forEach((delay) => {
               const osc = this.ctx.createOscillator();
               const gain = this.ctx.createGain();
@@ -933,7 +925,6 @@
               osc.stop(t + delay + 0.09);
             });
           } else if (type === "applause") {
-            // Synthesized golf crowd cheer
             const b = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.9, this.ctx.sampleRate);
             const d = b.getChannelData(0);
             for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.4;
@@ -951,9 +942,7 @@
             g.connect(this.ctx.destination);
             src.start(t);
           }
-        } catch (e) {
-          // Audio fallback gracefully silent if blocked
-        }
+        } catch (e) {}
       }
     };
 
@@ -1110,14 +1099,14 @@
 
     function fmt(n) { return "$" + Math.floor(n).toLocaleString(); }
 
-    /* --- MATCH & BALLISTIC ENGINE STATE --- */
+    /* --- MATCH ENGINE STATE --- */
     let match = {
       active: false,
-      mode: "tournament", // "tournament", "skins", "matchplay", "playoff"
-      courseName: "",
+      mode: "tournament",
+      courseName: "Kapalua Plantation Course",
       totalHoles: 18,
       holeIdx: 0,
-      holeData: null,
+      holeData: { num: 1, par: 4, yards: 445 },
       stroke: 1,
       ballX: 0,
       ballY: 0,
@@ -1133,7 +1122,7 @@
       skinsWager: 100000,
       skinsCarryover: 0,
       skinsLog: [],
-      matchPlayStatus: 0, // >0 user up, <0 rival up
+      matchPlayStatus: 0,
       tracerTrail: [],
       challenges: []
     };
@@ -1149,6 +1138,14 @@
       const idx = ["tour", "play", "modes", "bag", "career"].indexOf(tabId);
       if (idx !== -1) document.querySelectorAll(".bar-btn")[idx].classList.add("active");
 
+      if (tabId === "play") {
+        if (!match.active) {
+          startMode("tournament");
+        } else {
+          populateClubSelect();
+          updateRadarDisplay();
+        }
+      }
       if (tabId === "bag") renderCatalogTab('driver');
       renderAllViews();
     }
@@ -1169,7 +1166,6 @@
     function renderAllViews() {
       renderHUD();
 
-      // Current Tour Event
       const ev = CALENDAR[user.week];
       document.getElementById("ev-week-label").textContent = `Week ${user.week + 1} of ${CALENDAR.length} • Season ${user.year}`;
       document.getElementById("ev-name").textContent = ev.name;
@@ -1183,7 +1179,6 @@
       badge.textContent = ev.type.toUpperCase();
       badge.className = "badge " + (ev.type === "major" ? "badge-major" : (ev.type === "playoff" ? "badge-playoff" : (ev.type === "sig" ? "badge-sig" : "badge-callaway")));
 
-      // Schedule listing
       let sHtml = "";
       CALENDAR.forEach((c, i) => {
         const isCur = i === user.week;
@@ -1195,7 +1190,6 @@
       });
       document.getElementById("full-sched-list").innerHTML = sHtml;
 
-      // Bag specs
       document.getElementById("spec-driver").textContent = user.bag.driver;
       document.getElementById("spec-shaft").textContent = user.bag.shaft;
       document.getElementById("spec-hosel").textContent = `${user.tuning.loftOffset >= 0 ? '+' : ''}${user.tuning.loftOffset.toFixed(1)}° Loft / ${user.tuning.bias} Bias (OptiFit 3)`;
@@ -1208,7 +1202,6 @@
       document.getElementById("spec-ball").textContent = user.bag.ball;
       document.getElementById("triple-track-status").textContent = user.tuning.tripleTrack ? "ENABLED (+15% Putting Precision)" : "OFF";
 
-      // Stats
       document.getElementById("st-starts").textContent = user.starts;
       document.getElementById("st-cuts").textContent = user.cuts;
       document.getElementById("st-top10s").textContent = user.top10s;
@@ -1216,14 +1209,12 @@
       document.getElementById("st-fedex").textContent = user.fedexTitles;
       document.getElementById("st-earnings").textContent = fmt(user.earnings);
 
-      // Skills
       document.getElementById("skill-pwr").textContent = user.power;
       document.getElementById("skill-acc").textContent = user.accuracy;
       document.getElementById("skill-gir").textContent = user.gir;
       document.getElementById("skill-scram").textContent = user.scrambling;
       document.getElementById("skill-putt").textContent = user.putting;
 
-      // Sponsors
       let spHtml = "";
       SPONSORSHIPS.forEach((s, idx) => {
         const qual = user.owgr <= s.minRank && user.wins >= s.minWins;
@@ -1341,13 +1332,13 @@
         { id: "clutch_putt", text: "Clutch Stroke: Drain a 15+ ft putt", reward: 25000, done: false },
         { id: "birdie", text: "Birdie Hunt: Card a birdie on any hole", reward: 18000, done: false }
       ];
-      // Pick 3 random
       match.challenges = challengePool.sort(() => 0.5 - Math.random()).slice(0, 3);
       renderChallengesBanner();
     }
 
     function renderChallengesBanner() {
       const list = document.getElementById("challenges-list");
+      if (!list) return;
       list.innerHTML = "";
       match.challenges.forEach((ch) => {
         list.innerHTML += `
@@ -1394,42 +1385,64 @@
       generateCaddieAdvice();
 
       logShotFeed(`>> You stand on the ${holeNum}th tee at ${match.courseName}. Par ${par}, ${yardage} yards.`);
-      document.getElementById("shot-controls-wrapper").style.display = "block";
-      document.getElementById("putting-controls-wrapper").style.display = "none";
+      
+      const shotDeck = document.getElementById("shot-controls-wrapper");
+      const puttDeck = document.getElementById("putting-controls-wrapper");
+      const transDeck = document.getElementById("hole-transition-wrapper");
+      
+      if (shotDeck) shotDeck.style.display = "block";
+      if (puttDeck) puttDeck.style.display = "none";
+      if (transDeck) {
+        transDeck.style.display = "none";
+        transDeck.innerHTML = "";
+      }
     }
 
     function generateCaddieAdvice() {
       const wDir = getWindDirectionText(match.windDirDeg);
       let advice = "";
+      const select = document.getElementById("shot-club-select");
+      const clubName = (select && select.selectedIndex >= 0) ? select.options[select.selectedIndex].textContent.split('[')[0].trim() : "Driver";
+
       if (match.lie === "Tee") {
         if (match.windSpeed > 10 && wDir.includes("Head")) {
-          advice = `"Breeze is stiff in our teeth (${match.windSpeed} mph). Tee it low and pull the Stinger to keep it under the wind."`;
+          advice = `"Breeze is stiff in our teeth (${match.windSpeed} mph). Consider teeing down with the ${clubName} and play a Stinger."`;
         } else {
-          advice = `"Wind is ${match.windSpeed} mph ${wDir}. Aim fairway center, smooth tour tempo, let the Ai Smoke do the work."`;
+          advice = `"Wind is ${match.windSpeed} mph ${wDir}. Smooth tour tempo with the ${clubName}, let the Callaway face do the work."`;
         }
       } else {
         const effectiveDist = Math.round(match.distRemaining + (match.elevationFt * -0.3));
-        advice = `"Plays like ${effectiveDist} yards with the elevation. Aim for center green and trust the number."`;
+        advice = `"Plays like ${effectiveDist} yards with the elevation. Selected ${clubName} to hit the green tier."`;
       }
       document.getElementById("caddie-advice-text").textContent = advice;
     }
 
+    function onClubChange() {
+      generateCaddieAdvice();
+      drawRadarCanvas();
+    }
+
     function populateClubSelect() {
       const select = document.getElementById("shot-club-select");
+      if (!select) return;
       select.innerHTML = "";
 
       const pwr = user.power + user.gearBoosts.pwr + user.gearBoosts.all;
+      const driverName = user.bag.driver.split('(')[0].trim();
+      const woodName = user.bag.wood.split('(')[0].trim();
+      const ironName = user.bag.irons.split('(')[0].trim();
+
       const clubs = [
-        { id: "dr", name: `Driver (${user.bag.driver.split(' ')[1] || 'Ai Smoke'})`, base: Math.floor(275 + (pwr * 0.75)) },
-        { id: "3w", name: "3-Wood (Ai Smoke Triple Diamond)", base: Math.floor(248 + (pwr * 0.5)) },
+        { id: "dr", name: `Driver (${driverName})`, base: Math.floor(275 + (pwr * 0.75)) },
+        { id: "3w", name: `3-Wood (${woodName})`, base: Math.floor(248 + (pwr * 0.5)) },
         { id: "uw", name: "Apex UW / Hybrid (19°)", base: 228 },
-        { id: "4i", name: "Apex 4-Iron", base: 212 },
-        { id: "5i", name: "Apex 5-Iron", base: 198 },
-        { id: "6i", name: "Apex 6-Iron", base: 184 },
-        { id: "7i", name: "Apex 7-Iron", base: 172 },
-        { id: "8i", name: "Apex 8-Iron", base: 160 },
-        { id: "9i", name: "Apex 9-Iron", base: 147 },
-        { id: "pw", name: "Apex Pitching Wedge (46°)", base: 134 },
+        { id: "4i", name: `${ironName} 4-Iron`, base: 212 },
+        { id: "5i", name: `${ironName} 5-Iron`, base: 198 },
+        { id: "6i", name: `${ironName} 6-Iron`, base: 184 },
+        { id: "7i", name: `${ironName} 7-Iron`, base: 172 },
+        { id: "8i", name: `${ironName} 8-Iron`, base: 160 },
+        { id: "9i", name: `${ironName} 9-Iron`, base: 147 },
+        { id: "pw", name: `${ironName} Pitching Wedge (46°)`, base: 134 },
         { id: "gw", name: "Opus Gap Wedge (52°)", base: 120 },
         { id: "sw", name: "Opus Sand Wedge (56°)", base: 104 },
         { id: "lw", name: "Opus Lob Wedge (60°)", base: 88 }
@@ -1442,7 +1455,7 @@
         if (diff < minDiff) { minDiff = diff; bestIdx = i; }
         const opt = document.createElement("option");
         opt.value = c.id;
-        opt.dataset.base = c.base;
+        opt.setAttribute("data-base", c.base);
         opt.textContent = `${c.name} [~${c.base} yds]`;
         select.appendChild(opt);
       });
@@ -1489,6 +1502,7 @@
 
     function drawRadarCanvas() {
       const canvas = document.getElementById("shotRadarCanvas");
+      if (!canvas) return;
       const ctx = canvas.getContext("2d");
       const w = canvas.width;
       const h = canvas.height;
@@ -1532,11 +1546,28 @@
       ctx.lineTo(w - 45, h / 2 - 14);
       ctx.stroke();
 
-      // Tracer Trail
+      // Scale
       const scaleX = (w - 90) / match.holeData.yards;
       const currentScreenX = 40 + (match.ballX * scaleX);
       const currentScreenY = (h / 2) + (match.ballY * 1.5);
 
+      // Projected Target Landing Reticle based on selected club
+      const select = document.getElementById("shot-club-select");
+      if (select && select.selectedIndex >= 0 && match.lie !== "Green") {
+        const opt = select.options[select.selectedIndex];
+        const baseDist = parseInt(opt.getAttribute("data-base")) || 150;
+        const projectedX = 40 + ((match.ballX + baseDist) * scaleX);
+
+        ctx.strokeStyle = "rgba(250, 204, 21, 0.45)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        ctx.arc(Math.min(w - 30, projectedX), h / 2, 12, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Tracer Trail
       if (match.tracerTrail.length > 1) {
         ctx.strokeStyle = "#facc15";
         ctx.lineWidth = 2;
@@ -1564,6 +1595,7 @@
 
     function logShotFeed(msg) {
       const feed = document.getElementById("shot-feed-log");
+      if (!feed) return;
       feed.innerHTML += `<br>${msg}`;
       feed.scrollTop = feed.scrollHeight;
     }
@@ -1571,12 +1603,14 @@
     /* --- BALLISTIC SHOT EXECUTION --- */
     function fireShotAction() {
       const select = document.getElementById("shot-club-select");
-      const baseDistance = parseInt(select.selectedOptions[0].dataset.base);
+      if (!select || select.selectedIndex < 0) return;
+
+      const opt = select.options[select.selectedIndex];
+      const baseDistance = parseInt(opt.getAttribute("data-base")) || 150;
       const shape = document.getElementById("shot-shape-select").value;
       const effort = document.getElementById("shot-effort-select").value;
       const aim = document.getElementById("shot-aim-select").value;
 
-      // Audio cue
       if (select.value === "dr") AudioEngine.play("driver");
       else AudioEngine.play("iron");
 
@@ -1588,47 +1622,38 @@
       let pwrBuff = user.power + user.gearBoosts.pwr + user.gearBoosts.all;
       let accBuff = user.accuracy + user.gearBoosts.acc + user.gearBoosts.all;
 
-      // Swing weight tuning
       if (user.tuning.swingWeight === "D4" || user.tuning.swingWeight === "D5") pwrBuff += 2;
 
       let carryDist = (baseDistance + (user.tuning.loftOffset * 4)) * effortMult + (Math.random() * 8 - 4);
 
-      // Wind Vector
       const headwindFactor = Math.cos(match.windDirDeg * (Math.PI / 180));
       const crosswindFactor = Math.sin(match.windDirDeg * (Math.PI / 180));
       carryDist -= (headwindFactor * match.windSpeed * 1.15);
 
       let lateralDrift = crosswindFactor * match.windSpeed * 1.05;
 
-      // Shape
       if (shape === "draw") { carryDist += 6; lateralDrift -= 6; }
       if (shape === "fade") { carryDist -= 4; lateralDrift += 6; }
       if (shape === "stinger") { carryDist *= 0.95; lateralDrift *= 0.45; }
       if (shape === "high") { carryDist *= 0.96; }
 
-      // Aim offset
       if (aim === "bailout_left") lateralDrift -= 14;
       if (aim === "bailout_right") lateralDrift += 14;
-
-      // OptiFit Bias
       if (user.tuning.bias === "Draw") lateralDrift -= 5;
 
-      // Skill Dispersion
       const dispersion = (100 - accBuff) * 0.22;
       lateralDrift += (Math.random() * dispersion * 2 - dispersion);
 
-      // Lie Penalties
       if (match.lie === "Rough") carryDist *= 0.85;
       if (match.lie === "Fairway Bunker") carryDist *= 0.82;
       if (match.lie === "Greenside Bunker") {
         carryDist = Math.min(28, carryDist * 0.3);
-        if (user.tuning.grind === "X-Grind") carryDist += 4; // High bounce bunker boost
+        if (user.tuning.grind === "X-Grind") carryDist += 4;
       }
 
       carryDist = Math.max(15, Math.round(carryDist));
       lateralDrift = Math.round(lateralDrift);
 
-      // Challenge trigger: Long drive 315+ in fairway
       if (match.lie === "Tee" && select.value === "dr" && carryDist >= 315 && Math.abs(lateralDrift) <= 12) {
         checkChallenge("bomb");
       }
@@ -1638,7 +1663,6 @@
       match.distRemaining = Math.max(0, match.holeData.yards - match.ballX);
       match.tracerTrail.push({ x: match.ballX, y: match.ballY });
 
-      // Determine Lie
       let newLie = "Fairway";
       const dev = Math.abs(match.ballY);
 
@@ -1648,7 +1672,7 @@
           match.greenDistFeet = Math.max(3, Math.round(dev * 2.1 + Math.random() * 8));
           if (match.greenDistFeet <= 6) checkChallenge("dart");
           setupPuttingSurface();
-          logShotFeed(`>> SHOT ${match.stroke}: DART! Carried ${carryDist} yds. Lands softly on the green, ${match.greenDistFeet} ft from pin.`);
+          logShotFeed(`>> SHOT ${match.stroke}: DART! Carried ${carryDist} yds. Lands softly on green, ${match.greenDistFeet} ft from pin.`);
           updateRadarDisplay();
           return;
         } else if (dev <= 22) {
@@ -1706,7 +1730,6 @@
       const roll = Math.random() * 100;
 
       if (roll <= makeChance || match.greenDistFeet <= 2) {
-        // Drop in cup
         AudioEngine.play("cup");
         const total = match.stroke;
         const par = match.holeData.par;
@@ -1740,7 +1763,6 @@
 
       const uScore = match.holeScores.user[match.holeScores.user.length - 1];
 
-      // Skins Mode logic
       if (match.mode === "skins") {
         const low = Math.min(uScore, ai1Score, ai2Score);
         const pot = match.skinsWager + match.skinsCarryover;
@@ -1761,7 +1783,6 @@
         }
       }
 
-      // Match Play logic
       if (match.mode === "matchplay") {
         const rivalScore = ai1Score;
         if (uScore < rivalScore) match.matchPlayStatus++;
@@ -1770,12 +1791,18 @@
 
       saveUserData();
 
+      const shotDeck = document.getElementById("shot-controls-wrapper");
+      const puttDeck = document.getElementById("putting-controls-wrapper");
+      const transDeck = document.getElementById("hole-transition-wrapper");
+
+      shotDeck.style.display = "none";
+      puttDeck.style.display = "none";
+      transDeck.style.display = "block";
+
       if (match.holeIdx + 1 < match.totalHoles) {
-        document.getElementById("shot-controls-wrapper").innerHTML = `
+        transDeck.innerHTML = `
           <button class="btn btn-gold" onclick="setupHole(${match.holeIdx + 2})">PROCEED TO HOLE ${match.holeIdx + 2} ➔</button>
         `;
-        document.getElementById("shot-controls-wrapper").style.display = "block";
-        document.getElementById("putting-controls-wrapper").style.display = "none";
       } else {
         completeFullRound();
       }
@@ -1822,9 +1849,11 @@
 
       saveUserData();
       openCustomModal("MATCH OFFICIAL RECORD", summaryHtml);
-      document.getElementById("shot-controls-wrapper").innerHTML = `
-        <button class="btn" onclick="tabNav('modes')">RETURN TO MODES</button>
-      `;
+      
+      const transDeck = document.getElementById("hole-transition-wrapper");
+      if (transDeck) {
+        transDeck.innerHTML = `<button class="btn" onclick="tabNav('modes')">RETURN TO MODES</button>`;
+      }
     }
 
     /* --- MODE 4: SKILLS COMBINE --- */
@@ -1834,18 +1863,15 @@
       const acc = user.accuracy + user.gearBoosts.acc;
       const putt = user.putting + user.gearBoosts.putt;
 
-      // 3 Drives
       const d1 = Math.round(280 + pwr * 0.6 + Math.random() * 20);
       const d2 = Math.round(285 + pwr * 0.6 + Math.random() * 20);
       const d3 = Math.round(290 + pwr * 0.7 + Math.random() * 25);
       const avgDrive = Math.round((d1 + d2 + d3) / 3);
 
-      // 3 Approach darts (ft from pin)
       const a1 = Math.max(3, Math.round((100 - acc) * 0.3 + Math.random() * 8));
       const a2 = Math.max(2, Math.round((100 - acc) * 0.25 + Math.random() * 6));
       const a3 = Math.max(4, Math.round((100 - acc) * 0.35 + Math.random() * 10));
 
-      // 3 Putts
       const p1 = Math.random() * 100 < putt * 1.1 ? "MADE (15ft)" : "MISSED";
       const p2 = Math.random() * 100 < putt * 1.2 ? "MADE (10ft)" : "MISSED";
       const p3 = Math.random() * 100 < putt * 0.9 ? "MADE (25ft)" : "MISSED";
@@ -2000,7 +2026,7 @@
     function openManual() {
       openCustomModal("Official Tour Operations Manual", `
         <div style="font-size:11px; line-height:1.6;">
-          <p><strong>1. In-Round Challenges:</strong> Every round generates 3 dynamic side bounties (e.g., 315yd Bomber, 6ft Dart, 15ft Putt). Complete them for instant cash rewards!</p>
+          <p><strong>1. In-Round Challenges:</strong> Every round generates 3 dynamic bounties (e.g., 315yd Bomber, 6ft Dart, 15ft Putt). Complete them for instant cash rewards!</p>
           <p><strong>2. 5 Championship Modes:</strong> Tour Season, 9-Hole Skins, 1v1 Sunday Match Play against Jon Rahm, Apex Skills Combine, and Sudden Death 18th Hole Playoff.</p>
           <p><strong>3. Web-Audio Sound Effects:</strong> Driver cracks, iron strikes, putter taps, cup rattles, and crowd applause are synthesized in real-time with zero external files.</p>
         </div>
@@ -2018,6 +2044,7 @@
 
     window.addEventListener("DOMContentLoaded", () => {
       renderAllViews();
+      populateClubSelect();
     });
   </script>
 </body>
